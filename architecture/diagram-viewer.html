@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotelio C4 Container Diagram</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .diagram-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .description {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .description h2 {
+            color: #495057;
+            margin-top: 0;
+        }
+        .description ul {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏨 Hotelio C4 Container Diagram</h1>
+        
+        <div class="diagram-container">
+            <div class="mermaid">
+graph TB
+    %% External Users
+    Browser[("🌐 Browser")]
+    Mobile[("📱 Mobile App")]
+    
+    %% Frontend Layer
+    Frontend["Frontend"]
+    
+    %% Routing Layer
+    Router["API Gateway"]
+    
+    %% Monolithic Backend
+    subgraph Monolith["🏢 Hotelio Monolith Backend"]
+        AppUserService["App User Service"]
+        BookingService["Booking Service"]
+        HotelService["Hotel Service"]
+        ReviewService["Review Service"]
+        PromoCodeService["Promo Code Service"]
+    end
+    
+    %% Extracted Microservices
+    ProductService["🏨 Hotel Service"]
+    
+    %% Databases
+    MainDB[("🗄️ Monolith Database")]
+    ProductDB[("🗄️ Hotel Service Database")]
+    
+    %% User Interactions
+    Browser --> Frontend
+    Mobile --> Frontend
+    Frontend --> Router
+    
+    %% Routing to Services
+    Router --> AppUserService
+    Router --> BookingService
+    Router --> HotelService
+    Router --> ReviewService
+    Router --> PromoCodeService
+    Router --> ProductService
+    
+    %% Internal Monolith Dependencies
+    AppUserService --> BookingService
+    HotelService --> BookingService
+    ReviewService --> BookingService
+    PromoCodeService --> AppUserService
+    
+    %% Database Connections
+    Monolith --> MainDB
+    ProductService --> ProductDB
+    
+    %% Styling
+    classDef userClass fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef frontendClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef routingClass fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef monolithClass fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef serviceClass fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    classDef dbClass fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    
+    class Browser,Mobile userClass
+    class Frontend frontendClass
+    class Router routingClass
+    class AppUserService,BookingService,HotelService,ReviewService,PromoCodeService monolithClass
+    class ProductService serviceClass
+    class MainDB,ProductDB dbClass
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html>

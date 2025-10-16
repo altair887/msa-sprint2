@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  booking-service-db:
+    image: postgres:15
+    container_name: booking-service-db-container
+    environment:
+      POSTGRES_USER: hotelio
+      POSTGRES_PASSWORD: hotelio
+      POSTGRES_DB: hotelio
+    ports:
+      - "5433:5432"
+    volumes:
+      - booking-service-db-data:/var/lib/postgresql/data
+    networks:
+      - hotelio-net
+
+  booking-service:
+    build:
+      context: .
+      dockerfile: ../Booking-Service/Dockerfile
+    container_name: booking-service
+    depends_on:
+      - booking-service-db
+    ports:      
+      - "9090:9090"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - dbConnectionString=Host=booking-service-db;Database=hotelio;Username=hotelio;Password=hotelio
+      - hotelioMonolithUrl=http://monolith:8080
+      - kafkaConnectionString=kafka:9092
+    networks:
+      - hotelio-net
+
+volumes:
+  booking-service-db-data:
+
+networks:
+  hotelio-net:
+    external: true

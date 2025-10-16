@@ -13,4 +13,7 @@ COPY wait-for-it.sh /usr/local/bin/wait-for-it
 COPY init-fixtures.sql regress.sh ./
 RUN chmod +x /usr/local/bin/wait-for-it regress.sh
 
+# Fix line endings for Windows compatibility
+RUN sed -i 's/\r$//' regress.sh
+
 ENTRYPOINT ["./regress.sh"]

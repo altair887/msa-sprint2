@@ -1,0 +1,11 @@
+/tasks/.idea**
+/tasks/task2/booking-history-service/bin**
+/tasks/task2/booking-history-service/obj**
+/tasks/task2/booking-service-sln/.vs**
+/tasks/task2/booking-history-service/.vs**
+/tasks/task2/booking-service-sln/booking-service/.vs**
+/tasks/task2/booking-service-sln/booking-service/bin**
+/tasks/task2/.vs**
+/tasks/task2/booking-service-sln/booking-service/obj**
+/tasks/task2/booking-service-sln/DockerCompose/bin**
+/tasks/task2/booking-service-sln/DockerCompose/obj**

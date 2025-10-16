@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  booking-history-db:
+    image: postgres:15
+    container_name: booking-history-db-container
+    environment:
+      POSTGRES_USER: hotelio
+      POSTGRES_PASSWORD: hotelio
+      POSTGRES_DB: hotelio
+    ports:
+      - "5434:5432"
+    volumes:
+      - booking-history-db-data:/var/lib/postgresql/data
+    networks:
+      - hotelio-net
+
+  booking-history-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking-history-service
+    depends_on:
+      - kafka
+      - booking-history-db
+    ports:
+      - "5002:80"
+      - "5003:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80;https://+:443
+      - kafkaConnectionString=kafka:9092
+      - dbConnectionString=Host=booking-history-db;Database=hotelio;Username=hotelio;Password=hotelio
+    networks:
+      - hotelio-net
+
+volumes:
+  booking-history-db-data:
+
+networks:
+  hotelio-net:
+    external: true

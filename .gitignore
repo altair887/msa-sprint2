@@ -9,3 +9,6 @@
 /tasks/task2/booking-service-sln/booking-service/obj**
 /tasks/task2/booking-service-sln/DockerCompose/bin**
 /tasks/task2/booking-service-sln/DockerCompose/obj**
+/tasks/task2/booking-service-sln/booking-history-service/bin**
+/tasks/task2/booking-service-sln/booking-history-service/obj**
+/tasks/task2/booking-service-sln/booking-history-service/.vs**

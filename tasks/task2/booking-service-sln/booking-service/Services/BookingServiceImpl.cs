@@ -41,7 +41,7 @@ public class BookingServiceImpl : BookingService.BookingServiceBase
         var startTime = DateTime.UtcNow;
         
         _logger.LogInformation("🔵 gRPC CreateBooking Request - Method: {Method}, Peer: {Peer}, Timestamp: {Timestamp}", 
-            method, peer, startTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+            method, peer, startTime.ToString("yyyy-MM-dd HH:mm:ss.fff")); 
         
         _logger.LogInformation("📥 CreateBooking Details: userId={UserId}, hotelId={HotelId}, promoCode={PromoCode}", 
             request.UserId, request.HotelId, request.PromoCode);

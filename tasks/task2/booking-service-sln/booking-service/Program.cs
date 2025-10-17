@@ -75,6 +75,7 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<BookingServiceImpl>();
+app.MapGrpcReflectionService(); // Enable gRPC reflection for tools like grpcurl
 
 // Ensure database is created
 using (var scope = app.Services.CreateScope())

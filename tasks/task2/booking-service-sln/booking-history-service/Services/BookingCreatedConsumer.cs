@@ -101,7 +101,7 @@ public class BookingCreatedConsumer : BackgroundService
                 PromoCode = bookingEvent.PromoCode,
                 DiscountPercent = bookingEvent.DiscountPercent,
                 Price = (decimal)bookingEvent.Price,
-                CreatedAt = DateTime.Parse(bookingEvent.CreatedAt),
+                CreatedAt = DateTime.SpecifyKind(DateTime.Parse(bookingEvent.CreatedAt), DateTimeKind.Utc),
                 EventProcessedAt = DateTime.UtcNow
             };
 

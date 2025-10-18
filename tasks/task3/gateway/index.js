@@ -8,6 +8,8 @@ const gateway = new ApolloGateway({
     { name: 'booking', url: 'http://booking-subgraph:4001' },
     { name: 'hotel', url: 'http://hotel-subgraph:4002' }
   ],
+  debug: true,
+  logger: console,
   buildService: ({ name, url }) => {
     return new RemoteGraphQLDataSource({
         url,
@@ -19,13 +21,38 @@ const gateway = new ApolloGateway({
           } 
         }
     });
-}
+  }
 });
 
 const server = new ApolloServer({ 
   gateway, 
   subscriptions: false,
-  csrfPrevention: false  // Disable CSRF protection for development
+  csrfPrevention: false,
+  includeStacktraceInErrorResponses: true,
+  logger: console,
+  plugins: [
+    {
+      async requestDidStart() {
+        return {
+          async parsingDidStart() {
+            console.log('[Gateway] Parsing request');
+          },
+          async validationDidStart() {
+            console.log('[Gateway] Validating request');
+          },
+          async executionDidStart() {
+            console.log('[Gateway] Executing request');
+          },
+          async didEncounterErrors(requestContext) {
+            console.error('[Gateway] Errors:', requestContext.errors);
+          },
+          async willSendResponse(requestContext) {
+            console.log('[Gateway] Sending response');
+          }
+        };
+      }
+    }
+  ]
 });
 
 startStandaloneServer(server, {

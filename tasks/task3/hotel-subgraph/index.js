@@ -18,13 +18,27 @@ const typeDefs = gql`
 
 const resolvers = {
   Hotel: {
-    __resolveReference: async ({ id }) => {
-      // TODO: Реальный вызов к hotel-сервису или заглушка
+    __resolveReference: async ({ id }, context) => {
+      
+      // TODO: Заглушка - replace with actual data source
+      return {
+        id: id,
+        name: `Hotel ${id}`,
+        city: 'City 1',
+        stars: 5
+      };
     },
   },
   Query: {
-    hotelsByIds: async (_, { ids }) => {
+    hotelsByIds: async (_, { ids }, { req }) => {
       // TODO: Заглушка или REST-запрос
+      
+      return ids.map(id => ({
+        id: id,
+        name: `Hotel ${id}`,
+        city: 'City 1',
+        stars: 5
+      }));
     },
   },
 };
@@ -35,6 +49,7 @@ const server = new ApolloServer({
 
 startStandaloneServer(server, {
   listen: { port: 4002 },
+  context: async ({ req }) => ({ req }),
 }).then(() => {
   console.log('✅ Hotel subgraph ready at http://localhost:4002/');
 });

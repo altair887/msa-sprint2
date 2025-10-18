@@ -61,7 +61,7 @@ docker run --rm \                                                               
 
 
 docker build -t hotelio-tester .
-docker run --rm   -e DB_HOST=host.docker.internal  -e DB_PORT=5432  -e DB_POST_BOOKINGS=5433 -e DB_NAME=hotelio  -e DB_USER=hotelio  -e DB_PASSWORD=hotelio -e API_URL=http://host.docker.internal:8084 hotelio-tester
+docker run --rm   -e DB_HOST=host.docker.internal  -e DB_PORT=5432  -e DB_PORT_BOOKINGS=5433 -e DB_NAME=hotelio  -e DB_USER=hotelio  -e DB_PASSWORD=hotelio -e API_URL=http://host.docker.internal:8084 hotelio-tester
 ```
 
 curl -sSf -X POST "${BASE}/api/bookings?userId=Username1&hotelId=Hotel1"

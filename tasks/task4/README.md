@@ -1,7 +1,6 @@
 kubectl port-forward service/booking-service 8080:80
  helm upgrade booking-service helm/booking-service      
   helm install booking-service helm/booking-service        
-cd tasks/task4/booking-service; minikube image build -t booking-service:latest .
 
 # Подготовка окружения
 Перед началом убедитесь, что на машине установлены:

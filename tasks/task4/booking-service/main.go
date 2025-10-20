@@ -6,7 +6,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync/atomic"
 )
+
+var isReady int32 = 1
 
 func main() {
 	enableFeatureX := os.Getenv("ENABLE_FEATURE_X") == "true"

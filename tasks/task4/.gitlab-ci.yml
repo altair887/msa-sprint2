@@ -2,60 +2,84 @@ stages:
   - build
   - test
   - deploy
+  - tag
 
 variables:
   IMAGE_TAG: latest
   IMAGE_NAME: booking-service
-  DOCKER_CONTEXT: booking-service
+  BUILD_CONTEXT: booking-service
   HELM_CHART: helm/booking-service
   HELM_RELEASE: booking-service
 
 build:
   stage: build
   script:
-    - echo "Building Docker image..."
-    - cd ${DOCKER_CONTEXT}
-    - docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-    - docker images | grep ${IMAGE_NAME}
+    - export IMAGE_NAME=${IMAGE_NAME:-booking-service}
+    - export IMAGE_TAG=${IMAGE_TAG:-latest}
+    - export BUILD_CONTEXT=${BUILD_CONTEXT:-booking-service}
+    - echo "Building Docker image... $IMAGE_NAME:$IMAGE_TAG"
+    - cd $BUILD_CONTEXT
+    - echo "Build context directory... $BUILD_CONTEXT"
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker images | grep $IMAGE_NAME
     - cd ..
-    - echo "Creating git tag for successful build..."
-    - export BUILD_TAG="build-$(date +%Y%m%d-%H%M%S)"
-    - git config user.email "ci@gitlab.com"
-    - git config user.name "GitLab CI"
-    - git tag -a ${BUILD_TAG} -m "Build completed successfully at $(date)"
-    - git push origin ${BUILD_TAG} || echo "Warning: Could not push tag (may be running locally)"
-    - echo "Created git tag: ${BUILD_TAG}"
 
 test:
   stage: test
   script:
+    - export IMAGE_NAME=${IMAGE_NAME:-booking-service}
+    - export IMAGE_TAG=${IMAGE_TAG:-latest}
+    - echo "Cleaning up any existing test containers..."
+    - docker stop $IMAGE_NAME-test 2>/dev/null || true
+    - docker rm $IMAGE_NAME-test 2>/dev/null || true
     - echo "Starting container for testing..."
-    - docker run -d --name ${IMAGE_NAME}-test -p 8080:8080 ${IMAGE_NAME}:${IMAGE_TAG}
+    - docker run -d --name $IMAGE_NAME-test -p 8080:8080 $IMAGE_NAME:$IMAGE_TAG
     - echo "Waiting for service to start..."
     - sleep 5
     - echo "Testing health endpoint..."
-    - docker exec ${IMAGE_NAME}-test curl -f http://localhost:8080/health || exit 1
+    - docker exec $IMAGE_NAME-test curl -f http://localhost:8080/health || exit 1
     - echo "Testing ready endpoint..."
-    - docker exec ${IMAGE_NAME}-test curl -f http://localhost:8080/ready || exit 1
+    - docker exec $IMAGE_NAME-test curl -f http://localhost:8080/ready || exit 1
     - echo "All tests passed!"
   after_script:
+    - export IMAGE_NAME=${IMAGE_NAME:-booking-service}
     - echo "Cleaning up test container..."
-    - docker stop ${IMAGE_NAME}-test || true
-    - docker rm ${IMAGE_NAME}-test || true
+    - docker stop $IMAGE_NAME-test 2>/dev/null || true
+    - docker rm $IMAGE_NAME-test 2>/dev/null || true
 
 deploy:
   stage: deploy
   script:
+    - export IMAGE_NAME=${IMAGE_NAME:-booking-service}
+    - export IMAGE_TAG=${IMAGE_TAG:-latest}
+    - export HELM_RELEASE=${HELM_RELEASE:-booking-service}
+    - export HELM_CHART=${HELM_CHART:-helm/booking-service}
     - echo "Loading image to minikube..."
-    - minikube image load ${IMAGE_NAME}:${IMAGE_TAG}
-    - echo "Verifying image in minikube..."
-    - minikube image ls | grep ${IMAGE_NAME}
-    - echo "Deploying with Helm..."
-    - helm upgrade --install ${HELM_RELEASE} ${HELM_CHART} --set image.tag=${IMAGE_TAG}
+    #- minikube image load $IMAGE_NAME:$IMAGE_TAG
+    #- echo "Verifying image in minikube..."
+    #- minikube image ls | grep $IMAGE_NAME
+    #- echo "Deploying with Helm..."
+    - helm upgrade --install $HELM_RELEASE $HELM_CHART --set image.tag=$IMAGE_TAG
     - echo "Waiting for deployment to be ready..."
-    - kubectl rollout status deployment/${HELM_RELEASE} --timeout=120s
+    - kubectl rollout status deployment/$HELM_RELEASE --timeout=120s
     - echo "Deployment successful!"
-    - kubectl get all -l app=${HELM_RELEASE}
+    - kubectl get all -l app=$HELM_RELEASE
   only:
     - main
     - master
+
+# Git tagging job - uncomment when running in actual GitLab CI
+# (commented out for gitlab-ci-local compatibility on Windows)
+# tag:
+#   stage: tag
+#   script:
+#     - echo "Creating git tag for successful build..."
+#     - export BUILD_TAG="build-$(date +%Y%m%d-%H%M%S)"
+#     - git config user.email "ci@gitlab.com"
+#     - git config user.name "GitLab CI"
+#     - git tag -a ${BUILD_TAG} -m "Build completed successfully at $(date)"
+#     - git push origin ${BUILD_TAG} || echo "Warning: Could not push tag (may be running locally)"
+#     - echo "Created git tag: ${BUILD_TAG}"
+#   only:
+#     - main
+#     - master

@@ -1,0 +1,6 @@
+IMAGE_TAG: latest
+IMAGE_NAME: booking-service
+DOCKER_CONTEXT: booking-service
+HELM_CHART: helm/booking-service
+HELM_RELEASE: booking-service
+

@@ -8,13 +8,8 @@ RUN apk add --no-cache curl
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем Go-файл и скрипт проверки DNS
+# Копируем Go-файл
 COPY main.go .
-COPY check-dns.sh .
-
-# TODO: Сделать скрипт исполняемым
-# Ожидаемый код:
-RUN chmod +x check-dns.sh
 
 # TODO: Собрать бинарник из main.go
 # Ожидаемый код:

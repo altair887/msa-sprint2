@@ -12,6 +12,9 @@ service:
 
 resources:
 
+featureFlags:
+  enableFeatureX: false
+
 livenessProbe:
   httpGet:
     path: /health

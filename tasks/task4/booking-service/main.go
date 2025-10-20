@@ -23,10 +23,17 @@ func main() {
 	// Readiness endpoint (readiness probe)
 	http.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status": "READY",
-		})
+		if atomic.LoadInt32(&isReady) == 1 {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status": "READY",
+			})
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status": "NOT_READY",
+			})
+		}
 	})
 
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {

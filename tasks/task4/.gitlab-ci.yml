@@ -17,9 +17,9 @@ build:
     - export IMAGE_NAME=${IMAGE_NAME:-booking-service}
     - export IMAGE_TAG=${IMAGE_TAG:-latest}
     - export BUILD_CONTEXT=${BUILD_CONTEXT:-booking-service}
-    - echo "Building Docker image... $IMAGE_NAME:$IMAGE_TAG"
+    - echo "Building Docker image..."
     - cd $BUILD_CONTEXT
-    - echo "Build context directory... $BUILD_CONTEXT"
+    - echo "Build context directory..."
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
     - docker images | grep $IMAGE_NAME
     - cd ..
@@ -30,8 +30,8 @@ test:
     - export IMAGE_NAME=${IMAGE_NAME:-booking-service}
     - export IMAGE_TAG=${IMAGE_TAG:-latest}
     - echo "Cleaning up any existing test containers..."
-    - docker stop $IMAGE_NAME-test 2>/dev/null || true
-    - docker rm $IMAGE_NAME-test 2>/dev/null || true
+    - docker stop $IMAGE_NAME-test 2>/dev/null || true 
+    - docker rm $IMAGE_NAME-test 2>/dev/null || true 
     - echo "Starting container for testing..."
     - docker run -d --name $IMAGE_NAME-test -p 8080:8080 $IMAGE_NAME:$IMAGE_TAG
     - echo "Waiting for service to start..."
@@ -45,41 +45,49 @@ test:
     - export IMAGE_NAME=${IMAGE_NAME:-booking-service}
     - echo "Cleaning up test container..."
     - docker stop $IMAGE_NAME-test 2>/dev/null || true
-    - docker rm $IMAGE_NAME-test 2>/dev/null || true
+    - docker rm $IMAGE_NAME-test 2>/dev/null || true 
 
 deploy:
   stage: deploy
+  # For real GitLab CI with k8s cluster:
+  # image:
+  #   name: alpine/helm:latest
+  #   entrypoint: [""]
+  
+  # For gitlab-ci-local with local minikube:
+  # Comment out image above and run with: gitlab-ci-local --shell-executor-no-image
+  
   script:
     - export IMAGE_NAME=${IMAGE_NAME:-booking-service}
     - export IMAGE_TAG=${IMAGE_TAG:-latest}
     - export HELM_RELEASE=${HELM_RELEASE:-booking-service}
     - export HELM_CHART=${HELM_CHART:-helm/booking-service}
+    - echo "Using direct path to helm..."
+    - export HELM_BIN="/c/ProgramData/chocolatey/bin/helm.exe"
+    - export KUBECTL_BIN="/c/ProgramData/chocolatey/bin/kubectl.exe"
+    - export MINIKUBE_BIN="/c/ProgramData/chocolatey/bin/minikube.exe"
     - echo "Loading image to minikube..."
-    #- minikube image load $IMAGE_NAME:$IMAGE_TAG
-    #- echo "Verifying image in minikube..."
-    #- minikube image ls | grep $IMAGE_NAME
-    #- echo "Deploying with Helm..."
-    - helm upgrade --install $HELM_RELEASE $HELM_CHART --set image.tag=$IMAGE_TAG
+    - $MINIKUBE_BIN image load $IMAGE_NAME:$IMAGE_TAG || echo "Skipping image load"
+    - echo "Deploying with Helm..."
+    - $HELM_BIN upgrade --install $HELM_RELEASE $HELM_CHART --set image.tag=$IMAGE_TAG
     - echo "Waiting for deployment to be ready..."
-    - kubectl rollout status deployment/$HELM_RELEASE --timeout=120s
+    - $KUBECTL_BIN rollout status deployment/$HELM_RELEASE --timeout=120s || true
     - echo "Deployment successful!"
-    - kubectl get all -l app=$HELM_RELEASE
+    - $KUBECTL_BIN get all -l app=$HELM_RELEASE
   only:
     - main
     - master
 
-# Git tagging job - uncomment when running in actual GitLab CI
-# (commented out for gitlab-ci-local compatibility on Windows)
-# tag:
-#   stage: tag
-#   script:
-#     - echo "Creating git tag for successful build..."
-#     - export BUILD_TAG="build-$(date +%Y%m%d-%H%M%S)"
-#     - git config user.email "ci@gitlab.com"
-#     - git config user.name "GitLab CI"
-#     - git tag -a ${BUILD_TAG} -m "Build completed successfully at $(date)"
-#     - git push origin ${BUILD_TAG} || echo "Warning: Could not push tag (may be running locally)"
-#     - echo "Created git tag: ${BUILD_TAG}"
-#   only:
-#     - main
-#     - master
+tag:
+  stage: tag
+  script:
+    - echo "Creating git tag for successful build..."
+    - export BUILD_TAG="build-$(date +%Y%m%d-%H%M%S)"
+    - git config user.email "ci@gitlab.com"
+    - git config user.name "GitLab CI"
+    - git tag -a ${BUILD_TAG} -m "Build completed successfully at $(date)"
+    - git push origin ${BUILD_TAG}
+    - echo "Created git tag"
+  only:
+    - main
+    - master

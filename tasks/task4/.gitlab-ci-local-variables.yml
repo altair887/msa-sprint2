@@ -1,4 +1,0 @@
-# GitLab CI Local Variables
-# This file defines variables used by gitlab-ci-local
-# To use shell executor and access local tools, run:
-# gitlab-ci-local --shell-executor-no-image

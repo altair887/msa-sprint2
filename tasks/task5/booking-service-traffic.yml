@@ -6,10 +6,34 @@ spec:
   hosts:
   - booking-service-task5
   http:
+  # Feature flag: Route users with header "x-version: v2" to v2
+  - match:
+    - headers:
+        x-version:
+          exact: v2
+    route:
+    - destination:
+        host: booking-service-task5
+        subset: v2
+  # Feature flag: Route users with header "x-feature: beta" to v2
+  - match:
+    - headers:
+        x-feature:
+          exact: beta
+    route:
+    - destination:
+        host: booking-service-task5
+        subset: v2
+  # Canary release: 90% to v1, 10% to v2
   - route:
     - destination:
         host: booking-service-task5
         subset: v1
+      weight: 90
+    - destination:
+        host: booking-service-task5
+        subset: v2
+      weight: 10
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -17,7 +41,13 @@ metadata:
   name: booking-service-task5
 spec:
   host: booking-service-task5
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
   subsets:
   - name: v1
     labels:
       version: v1
+  - name: v2
+    labels:
+      version: v2

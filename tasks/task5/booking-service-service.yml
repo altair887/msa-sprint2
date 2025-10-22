@@ -12,5 +12,5 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: booking-service-task5
+    app: booking-service-task5   
 

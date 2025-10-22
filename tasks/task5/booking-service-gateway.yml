@@ -23,25 +23,7 @@ spec:
   gateways:
   - booking-service-gateway
   http:
-  # Priority 1: Feature flag header routing - both destinations for failover
-  - match:
-    - headers:
-        x-feature-enabled:
-          exact: "true"
-    route:
-    - destination:
-        host: booking-service-task5
-        subset: v2
-      weight: 50
-    - destination:
-        host: booking-service-task5
-        subset: v1
-      weight: 50
-    retries:
-      attempts: 3
-      perTryTimeout: 2s
-      retryOn: 5xx,reset,connect-failure,refused-stream,unavailable
-  # Priority 2: Default canary release - 90% to v1, 10% to v2
+  # Default canary release - 90% to v1, 10% to v2
   - route:
     - destination:
         host: booking-service-task5

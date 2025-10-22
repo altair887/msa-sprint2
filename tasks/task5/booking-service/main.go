@@ -53,9 +53,9 @@ func main() {
 
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		if enableFeatureX {
-			fmt.Fprintf(w, "pong from v2 (with Feature X)")
+			fmt.Fprintf(w, "2pong from v2 (with Feature X)")
 		} else {
-			fmt.Fprintf(w, "pong from v1")
+			fmt.Fprintf(w, "1pong from v1")
 		}
 	})
 
@@ -69,23 +69,7 @@ func main() {
 				"feature": "beta-feature",
 			})
 		})
-	}
-
-	// Booking endpoint to simulate business logic
-	http.HandleFunc("/bookings", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		response := map[string]interface{}{
-			"bookings": []map[string]string{
-				{"id": "1", "hotel": "Grand Hotel", "status": "confirmed"},
-				{"id": "2", "hotel": "Beach Resort", "status": "pending"},
-			},
-		}
-		if enableFeatureX {
-			response["enhanced"] = true
-			response["message"] = "Enhanced booking features available"
-		}
-		json.NewEncoder(w).Encode(response)
-	})
+	}	
 
 	log.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

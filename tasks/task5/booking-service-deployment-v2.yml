@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: booking-service
-        image: booking-service:v2
+        image: booking-service:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080

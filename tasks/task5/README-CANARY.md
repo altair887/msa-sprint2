@@ -1,3 +1,47 @@
+VT
+
+Some debug commands:
+kubectl get pods -n istio-system -o wide
+
+# Watch the pods in real-time
+kubectl get pods -n istio-system --watch
+
+# Check the status of all resources in istio-system
+kubectl get all -n istio-system
+
+# Describe a specific Istio pod
+kubectl describe pod <pod-name> -n istio-system
+
+kubectl get pods → queries default namespace only
+kubectl get pods -n istio-system → queries istio-system namespace only
+kubectl get pods -A (or --all-namespaces) → queries all namespaces
+
+kubectl describe pod booking-service-task5-67d5f7cb47-znnb5
+
+
+cd booking-service
+docker build -t booking-service:latest .
+
+# Deploy both versions (differ only by env var)
+kubectl apply -f booking-service-deployment.yml      # ENABLE_FEATURE_X=false
+kubectl apply -f booking-service-deployment-v2.yml   # ENABLE_FEATURE_X=true
+
+# Step 2: Create the Service (networking)
+kubectl apply -f booking-service-service.yml
+
+# Step 3: Configure Istio traffic rules
+kubectl apply -f booking-service-traffic.yml
+
+minikube image load booking-service:latest
+
+kubectl rollout restart deployment booking-service-task5
+kubectl rollout restart deployment booking-service-task5-v2
+
+kubectl delete pod -l app=booking-service-task5
+
+minikube service istio-ingressgateway -n istio-system
+
+
 # Canary Release and Feature Flags Setup
 
 This directory contains a complete setup for **canary releases** and **feature flags** using Istio service mesh.
@@ -42,10 +86,9 @@ This directory contains a complete setup for **canary releases** and **feature f
 ### Manual Deployment
 
 ```bash
-# 1. Build Docker images
+# 1. Build Docker image
 cd booking-service
-docker build -t booking-service:v1 -t booking-service:latest .
-docker build -t booking-service:v2 .
+docker build -t booking-service:latest .
 cd ..
 
 # 2. Deploy v1
@@ -65,35 +108,27 @@ kubectl apply -f booking-service-traffic.yml
 
 ### Canary Release (Weight-based)
 
-The default configuration routes:
-- **90%** of traffic to v1 (stable)
-- **10%** of traffic to v2 (canary)
+The configuration routes traffic based on **weights only**:
+- **90%** of traffic to v1 (stable, ENABLE_FEATURE_X=false)
+- **10%** of traffic to v2 (canary, ENABLE_FEATURE_X=true)
 
 This happens automatically with no user intervention.
 
-### Feature Flags (Header-based)
+### Feature Flags (Internal Behavior)
 
-You can force routing to v2 using HTTP headers:
+Feature flags control **microservice behavior**, NOT routing:
 
-#### Option 1: Using `x-version` header
+- **v1 instances** have `ENABLE_FEATURE_X=false`:
+  - Basic functionality
+  - No `/feature` endpoint
+  - Standard bookings response
 
-```bash
-curl -H "x-version: v2" http://booking-service-task5/version
-```
+- **v2 instances** have `ENABLE_FEATURE_X=true`:
+  - Enhanced functionality  
+  - `/feature` endpoint available
+  - Enhanced bookings with additional fields
 
-#### Option 2: Using `x-feature` header
-
-```bash
-curl -H "x-feature: beta" http://booking-service-task5/bookings
-```
-
-### Priority Order
-
-Istio processes routing rules in order:
-
-1. **x-version: v2** header → routes to v2
-2. **x-feature: beta** header → routes to v2  
-3. **Default** → 90% v1, 10% v2 (canary)
+**Important**: Routing is purely weight-based. Feature flags only affect what happens inside each version.
 
 ## 📊 Traffic Configuration Explained
 
@@ -101,32 +136,16 @@ Istio processes routing rules in order:
 
 ```yaml
 http:
-  # Priority 1: Explicit version header
-  - match:
-    - headers:
-        x-version:
-          exact: v2
-    route:
-    - destination:
-        subset: v2
-  
-  # Priority 2: Beta feature flag
-  - match:
-    - headers:
-        x-feature:
-          exact: beta
-    route:
-    - destination:
-        subset: v2
-  
-  # Priority 3: Default canary split
+  # Canary release: Weight-based traffic split
   - route:
     - destination:
+        host: booking-service-task5
         subset: v1
-      weight: 90
+      weight: 90  # 90% to v1 (ENABLE_FEATURE_X=false)
     - destination:
+        host: booking-service-task5
         subset: v2
-      weight: 10
+      weight: 10  # 10% to v2 (ENABLE_FEATURE_X=true)
 ```
 
 ### DestinationRule
@@ -159,44 +178,49 @@ v2 responses:   9 (9.0%)
 ✅ Canary release working correctly!
 ```
 
-### Test Feature Flags
+### Test Feature Flags (Internal Behavior)
 
 ```bash
 ./test-feature-flags.sh
 ```
 
 This tests:
-- Default routing (canary)
-- `x-version: v2` header routing
-- `x-feature: beta` header routing
-- Feature X availability on v2
+- Feature X availability based on ENABLE_FEATURE_X flag
+- `/feature` endpoint only accessible on v2 instances
+- Enhanced bookings only on v2 instances
+- Proper distribution (~90% v1, ~10% v2)
 
 ### Manual Testing
 
 #### Check info endpoint
 
 ```bash
-# Random version (canary split)
+# Random version based on canary split (90% v1, 10% v2)
 curl http://booking-service-task5/info
 
-# Force v2 (with Feature X)
-curl -H "x-version: v2" http://booking-service-task5/info
+# Response examples:
+# v1: {"featureX":false,"service":"booking-service-task5"}
+# v2: {"featureX":true,"service":"booking-service-task5"}
 ```
 
-#### Access Feature X (only on v2)
+#### Access Feature X endpoint
 
 ```bash
-curl -H "x-version: v2" http://booking-service-task5/feature
+# Only available on v2 instances (~10% of requests)
+curl http://booking-service-task5/feature
+
+# v1 response: 404 Not Found
+# v2 response: {"message":"Feature X is enabled!","feature":"beta-feature"}
 ```
 
 #### Check enhanced bookings
 
 ```bash
-# v1 - basic bookings
+# Call multiple times to see both versions
 curl http://booking-service-task5/bookings
 
-# v2 - enhanced bookings
-curl -H "x-feature: beta" http://booking-service-task5/bookings
+# v1 response (90%): Standard bookings without "enhanced" field
+# v2 response (10%): Bookings with "enhanced":true and additional message
 ```
 
 ## 📈 Gradual Rollout Strategy
@@ -243,7 +267,7 @@ kubectl patch deployment booking-service-task5-v2 \
 | ENABLE_FEATURE_X | false | true |
 | /feature endpoint | ❌ | ✅ |
 | Enhanced bookings | ❌ | ✅ |
-| Image tag | latest/v1 | v2 |
+| Docker image | booking-service:latest | booking-service:latest |
 | Replicas | 1 | 1 |
 
 ### Environment Variables
@@ -318,19 +342,29 @@ istioctl dashboard kiali
 - Test new code with 10% of production traffic
 - Monitor metrics before full rollout
 - Quick rollback if issues detected
+- Gradual traffic shifting (10% → 30% → 50% → 100%)
 
-### Feature Flags
-- Enable features for specific users (beta testers)
-- A/B testing with different user groups
-- Dark launches (deploy but don't expose)
+### Feature Flags (ENABLE_FEATURE_X)
+- Control internal microservice behavior
+- Enable experimental features in v2
+- Test new functionality with subset of traffic
+- Independent of routing logic
 
-### Example: Beta User Access
+### Example: Production Canary Flow
 
 ```bash
-# Beta users get header from auth service
-curl -H "x-feature: beta" \
-     -H "Authorization: Bearer <token>" \
-     http://booking-service-task5/bookings
+# Users make normal requests (no special headers needed)
+curl http://booking-service-task5/bookings
+
+# 90% get v1 response (stable, no enhanced features)
+# 10% get v2 response (canary, with enhanced features)
+
+# Monitor v2 metrics:
+# - Error rates
+# - Response times
+# - Resource usage
+
+# If v2 is stable, gradually increase weight in traffic.yml
 ```
 
 ## 🎯 Best Practices

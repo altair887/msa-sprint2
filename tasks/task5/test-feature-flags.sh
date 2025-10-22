@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# Script to test feature flags using HTTP headers
-# Tests routing based on x-version and x-feature headers
+# Script to test feature flags (ENABLE_FEATURE_X)
+# Feature flags control internal microservice behavior, NOT routing
+# Routing is handled by canary weights (90% v1, 10% v2)
 
-echo "Testing Feature Flags (Header-based Routing)"
-echo "============================================="
+echo "Testing Feature Flags (Internal Behavior)"
+echo "=========================================="
 echo ""
 
 SERVICE_URL="http://booking-service-task5"
@@ -15,92 +16,101 @@ if ! kubectl get service booking-service-task5 &>/dev/null; then
     SERVICE_URL="http://localhost:8080"
 fi
 
-echo "1. Testing default routing (no headers - canary split):"
-echo "--------------------------------------------------------"
-response=$(curl -s "$SERVICE_URL/info")
-echo "$response"
-featureX=$(echo "$response" | grep -o '"featureX":[^,}]*' | cut -d':' -f2)
-if [ "$featureX" == "true" ]; then
-    echo "→ Routed to: v2 (featureX: true)"
-else
-    echo "→ Routed to: v1 (featureX: false)"
-fi
+echo "Feature flags control which features are enabled in each version:"
+echo "  • v1 (90% traffic): ENABLE_FEATURE_X=false"
+echo "  • v2 (10% traffic): ENABLE_FEATURE_X=true"
 echo ""
 
-echo "2. Testing x-version: v2 header (should route to v2 with featureX):"
-echo "--------------------------------------------------------------------"
-response=$(curl -s -H "x-version: v2" "$SERVICE_URL/info")
-echo "$response"
-featureX=$(echo "$response" | grep -o '"featureX":[^,}]*' | cut -d':' -f2)
-if [ "$featureX" == "true" ]; then
-    echo "✅ Correctly routed to v2 (featureX enabled)"
-else
-    echo "❌ Expected v2 with featureX, got featureX: $featureX"
-fi
-echo ""
-
-echo "3. Testing x-feature: beta header (should route to v2 with featureX):"
-echo "----------------------------------------------------------------------"
-response=$(curl -s -H "x-feature: beta" "$SERVICE_URL/info")
-echo "$response"
-featureX=$(echo "$response" | grep -o '"featureX":[^,}]*' | cut -d':' -f2)
-if [ "$featureX" == "true" ]; then
-    echo "✅ Correctly routed to v2 (featureX enabled)"
-else
-    echo "❌ Expected v2 with featureX, got featureX: $featureX"
-fi
-echo ""
-
-echo "4. Testing /feature endpoint with x-version: v2:"
-echo "-------------------------------------------------"
-response=$(curl -s -H "x-version: v2" "$SERVICE_URL/feature")
-if echo "$response" | grep -q "Feature X is enabled"; then
-    echo "✅ Feature X is accessible on v2"
-    echo "$response"
-else
-    echo "❌ Feature X not found (response: $response)"
-fi
-echo ""
-
-echo "5. Testing /bookings with feature flag (x-feature: beta):"
-echo "----------------------------------------------------------"
-response=$(curl -s -H "x-feature: beta" "$SERVICE_URL/bookings")
-echo "$response"
-if echo "$response" | grep -q "enhanced"; then
-    echo "✅ Enhanced features enabled"
-else
-    echo "⚠️  Enhanced features not detected"
-fi
-echo ""
-
-echo "6. Multiple requests with x-version: v2 (should always have featureX):"
-echo "-----------------------------------------------------------------------"
+echo "1. Testing /info endpoint (shows featureX status):"
+echo "---------------------------------------------------"
+v1_count=0
 v2_count=0
-total=10
-for i in $(seq 1 $total); do
-    response=$(curl -s -H "x-version: v2" "$SERVICE_URL/info")
+for i in $(seq 1 20); do
+    response=$(curl -s "$SERVICE_URL/info")
     featureX=$(echo "$response" | grep -o '"featureX":[^,}]*' | cut -d':' -f2)
     if [ "$featureX" == "true" ]; then
         ((v2_count++))
-        echo -n "2"
     else
-        echo -n "1"
+        ((v1_count++))
     fi
 done
+echo "Results from 20 requests:"
+echo "  v1 (featureX: false): $v1_count"
+echo "  v2 (featureX: true):  $v2_count"
 echo ""
-echo "$v2_count/$total requests routed to v2 (with featureX)"
-if [ $v2_count -eq $total ]; then
-    echo "✅ All requests correctly routed to v2 with header"
+
+echo "2. Testing /feature endpoint (only available when featureX=true):"
+echo "------------------------------------------------------------------"
+feature_available=0
+feature_not_found=0
+for i in $(seq 1 20); do
+    response=$(curl -s "$SERVICE_URL/feature" 2>/dev/null)
+    if echo "$response" | grep -q "Feature X is enabled"; then
+        ((feature_available++))
+    else
+        ((feature_not_found++))
+    fi
+done
+echo "Results from 20 requests:"
+echo "  Feature available: $feature_available (~10% expected - v2 instances)"
+echo "  Feature not found: $feature_not_found (~90% expected - v1 instances)"
+if [ $feature_available -gt 0 ] && [ $feature_not_found -gt 0 ]; then
+    echo "✅ Feature X endpoint correctly available only on v2"
 else
-    echo "❌ Some requests incorrectly routed"
+    echo "⚠️  Unexpected distribution"
 fi
+echo ""
+
+echo "3. Testing /bookings endpoint (enhanced features on v2):"
+echo "---------------------------------------------------------"
+enhanced_count=0
+basic_count=0
+for i in $(seq 1 20); do
+    response=$(curl -s "$SERVICE_URL/bookings")
+    if echo "$response" | grep -q "enhanced"; then
+        ((enhanced_count++))
+    else
+        ((basic_count++))
+    fi
+done
+echo "Results from 20 requests:"
+echo "  Enhanced bookings: $enhanced_count (~10% expected - v2 with featureX)"
+echo "  Basic bookings:    $basic_count (~90% expected - v1 without featureX)"
+if [ $enhanced_count -gt 0 ] && [ $basic_count -gt 0 ]; then
+    echo "✅ Enhanced features correctly enabled only on v2"
+else
+    echo "⚠️  Unexpected distribution"
+fi
+echo ""
+
+echo "4. Sample responses:"
+echo "--------------------"
+echo ""
+echo "Calling /info multiple times to see both versions:"
+for i in {1..10}; do
+    response=$(curl -s "$SERVICE_URL/info")
+    featureX=$(echo "$response" | grep -o '"featureX":[^,}]*' | cut -d':' -f2)
+    if [ "$featureX" == "true" ]; then
+        echo "✓ v2 response: $response"
+        break
+    fi
+done
+for i in {1..10}; do
+    response=$(curl -s "$SERVICE_URL/info")
+    featureX=$(echo "$response" | grep -o '"featureX":[^,}]*' | cut -d':' -f2)
+    if [ "$featureX" == "false" ]; then
+        echo "✓ v1 response: $response"
+        break
+    fi
+done
 echo ""
 
 echo "Summary:"
 echo "--------"
-echo "Feature flags allow you to:"
-echo "  • Route specific users to v2 using x-version: v2 header"
-echo "  • Enable beta features using x-feature: beta header"
-echo "  • Test new features without affecting all users"
-echo "  • Gradually roll out features to select users"
+echo "Feature flags (ENABLE_FEATURE_X) control internal behavior:"
+echo "  ✓ v1 instances: Feature X disabled (90% of traffic)"
+echo "  ✓ v2 instances: Feature X enabled (10% of traffic)"
+echo "  ✓ /feature endpoint: Only available on v2"
+echo "  ✓ Enhanced bookings: Only on v2"
+echo "  ✓ Routing: Based on weights, not headers"
 

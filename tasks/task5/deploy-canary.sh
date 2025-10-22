@@ -6,21 +6,18 @@ echo "Deploying Canary Release Setup"
 echo "==============================="
 echo ""
 
-# Build Docker images
-echo "Step 1: Building Docker images..."
-echo "---------------------------------"
+# Build Docker image
+echo "Step 1: Building Docker image..."
+echo "--------------------------------"
 
 cd booking-service || exit 1
 
-echo "Building v1 image..."
-docker build -t booking-service:latest -t booking-service:v1 .
-
-echo "Building v2 image..."
-docker build -t booking-service:v2 .
+echo "Building Docker image..."
+docker build -t booking-service:latest .
 
 cd ..
 
-echo "✅ Docker images built"
+echo "✅ Docker image built"
 echo ""
 
 # Deploy to Kubernetes

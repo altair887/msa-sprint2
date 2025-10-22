@@ -33,6 +33,10 @@ spec:
         host: booking-service-task5
         subset: v2
       weight: 10
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: 5xx,reset,connect-failure,refused-stream
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -40,6 +44,20 @@ metadata:
   name: booking-service-task5
 spec:
   host: booking-service-task5
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
   subsets:
   - name: v1
     labels:

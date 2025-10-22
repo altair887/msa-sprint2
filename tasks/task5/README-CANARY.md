@@ -41,6 +41,9 @@ kubectl delete pod -l app=booking-service-task5
 
 minikube service istio-ingressgateway -n istio-system
 
+kubectl scale deployment booking-service-task5 --replicas=0
+
+$ curl -H "x-feature-flag:v2" http://127.0.0.1:49504/ping
 
 # Canary Release and Feature Flags Setup
 

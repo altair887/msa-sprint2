@@ -109,3 +109,32 @@ Request 97: 1pong from v1
 Request 98: 1pong from v1
 Request 99: 1pong from v1
 Request 100: 1pong from v1
+
+
+check-Istio.sh
+
+$ ./check-istio.sh
+▶️ Проверка установки Istio...
+NAME                                    READY   STATUS    RESTARTS      AGE
+istio-egressgateway-6fcb6ff99c-bnwd9    1/1     Running   1 (50m ago)   7h54m
+istio-ingressgateway-68694bc8cf-7ccbn   1/1     Running   1 (50m ago)   7h54m
+istiod-595745d6cf-phf4x                 1/1     Running   1 (50m ago)   7h54m
+▶️ Проверка Istio инъекции в default namespace...
+enabled
+
+
+check-fallback.sh
+
+$ ./check-fallback.sh
+NAME                                     READY   STATUS    RESTARTS   AGE
+booking-service-task5-67d5f7cb47-x9cfv   2/2     Running   0          61m
+deployment.apps/booking-service-task5-v2 scaled
+▶️ Testing fallback route...
+1pong from v1
+VT_PRACTICUM@DESKTOP-5O77H0H MINGW64 /x/CloudDocs/YandexDisk/Work/Yaandex_PRCM/Microservices/Sprint2_Monolith_DevOps/FinalTask/msa-sprint2/tasks/task5 (main)
+
+check-feature-flag.sh
+
+$ ./check-feature-flag.sh
+▶️ Проверка Feature Flag (X-Feature-Enabled: true)...
+1pong from v1

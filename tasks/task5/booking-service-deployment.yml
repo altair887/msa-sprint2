@@ -4,18 +4,48 @@ metadata:
   name: booking-service-task5
   labels:
     app: booking-service-task5
+    version: v1
 spec:
   replicas: 3
   selector:
     matchLabels:
       app: booking-service-task5
+      version: v1
   template:
     metadata:
       labels:
         app: booking-service-task5
+        version: v1
     spec:
       containers:
       - name: booking-service
         image: booking-service:latest
+        imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 80
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3

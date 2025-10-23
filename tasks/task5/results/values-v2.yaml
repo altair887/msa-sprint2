@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service-task5-v2
+  labels:
+    app: booking-service-task5
+    version: v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking-service-task5
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: booking-service-task5
+        version: v2
+    spec:
+      containers:
+      - name: booking-service
+        image: booking-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: ENABLE_FEATURE_X
+          value: "true"
+

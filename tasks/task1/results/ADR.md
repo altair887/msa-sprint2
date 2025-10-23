@@ -51,7 +51,6 @@
 4. Переключение API Gateway на работу с новым микросервисом
 
 ``` plantuml
-
 @startuml Hotelio C4 Container Diagram
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
@@ -138,7 +137,6 @@ skinparam rectangle<<boundary>> {
 }
 
 @enduml
-
 ```
 
 ### <a name="_bjrr7veeh80c"></a>**Альтернативы**

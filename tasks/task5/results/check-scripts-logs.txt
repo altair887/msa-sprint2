@@ -1,0 +1,137 @@
+minikube service istio-ingressgateway -n istio-system
+
+
+check-canary.sh
+
+VT_PRACTICUM@DESKTOP-5O77H0H MINGW64 /x/CloudDocs/YandexDisk/Work/Yaandex_PRCM/Microservices/Sprint2_Monolith_DevOps/FinalTask/msa-sprint2/tasks/task5 (main)
+$ ./check-canary.sh
+▶️ Checking canary release (90% v1, 10% v2)...
+Request 1: 1pong from v1
+Request 2: 1pong from v1
+Request 3: 1pong from v1
+Request 4: 1pong from v1
+Request 5: 1pong from v1
+Request 6: 1pong from v1
+Request 7: 1pong from v1
+Request 8: 1pong from v1
+Request 9: 1pong from v1
+Request 10: 2pong from v2 (with Feature X)
+Request 11: 1pong from v1
+Request 12: 1pong from v1
+Request 13: 1pong from v1
+Request 14: 1pong from v1
+Request 15: 1pong from v1
+Request 16: 1pong from v1
+Request 17: 1pong from v1
+Request 18: 1pong from v1
+Request 19: 1pong from v1
+Request 20: 1pong from v1
+Request 21: 1pong from v1
+Request 22: 1pong from v1
+Request 23: 1pong from v1
+Request 24: 1pong from v1
+Request 25: 1pong from v1
+Request 26: 1pong from v1
+Request 27: 1pong from v1
+Request 28: 1pong from v1
+Request 29: 1pong from v1
+Request 30: 1pong from v1
+Request 31: 1pong from v1
+Request 32: 1pong from v1
+Request 33: 1pong from v1
+Request 34: 1pong from v1
+Request 35: 1pong from v1
+Request 36: 1pong from v1
+Request 37: 1pong from v1
+Request 38: 1pong from v1
+Request 39: 1pong from v1
+Request 40: 1pong from v1
+Request 41: 1pong from v1
+Request 42: 1pong from v1
+Request 43: 1pong from v1
+Request 44: 1pong from v1
+Request 45: 2pong from v2 (with Feature X)
+Request 46: 1pong from v1
+Request 47: 1pong from v1
+Request 48: 1pong from v1
+Request 49: 1pong from v1
+Request 50: 1pong from v1
+Request 51: 1pong from v1
+Request 52: 1pong from v1
+Request 53: 1pong from v1
+Request 54: 1pong from v1
+Request 55: 1pong from v1
+Request 56: 1pong from v1
+Request 57: 1pong from v1
+Request 58: 1pong from v1
+Request 59: 1pong from v1
+Request 60: 1pong from v1
+Request 61: 1pong from v1
+Request 62: 1pong from v1
+Request 63: 1pong from v1
+Request 64: 1pong from v1
+Request 65: 1pong from v1
+Request 66: 1pong from v1
+Request 67: 2pong from v2 (with Feature X)
+Request 68: 1pong from v1
+Request 69: 1pong from v1
+Request 70: 1pong from v1
+Request 71: 1pong from v1
+Request 72: 1pong from v1
+Request 73: 1pong from v1
+Request 74: 1pong from v1
+Request 75: 1pong from v1
+Request 76: 1pong from v1
+Request 77: 1pong from v1
+Request 78: 1pong from v1
+Request 79: 1pong from v1
+Request 80: 1pong from v1
+Request 81: 1pong from v1
+Request 82: 1pong from v1
+Request 83: 1pong from v1
+Request 84: 1pong from v1
+Request 85: 1pong from v1
+Request 86: 1pong from v1
+Request 87: 2pong from v2 (with Feature X)
+Request 88: 1pong from v1
+Request 89: 1pong from v1
+Request 90: 1pong from v1
+Request 91: 1pong from v1
+Request 92: 1pong from v1
+Request 93: 1pong from v1
+Request 94: 1pong from v1
+Request 95: 1pong from v1
+Request 96: 1pong from v1
+Request 97: 1pong from v1
+Request 98: 1pong from v1
+Request 99: 1pong from v1
+Request 100: 1pong from v1
+
+
+check-Istio.sh
+
+$ ./check-istio.sh
+▶️ Проверка установки Istio...
+NAME                                    READY   STATUS    RESTARTS      AGE
+istio-egressgateway-6fcb6ff99c-bnwd9    1/1     Running   1 (50m ago)   7h54m
+istio-ingressgateway-68694bc8cf-7ccbn   1/1     Running   1 (50m ago)   7h54m
+istiod-595745d6cf-phf4x                 1/1     Running   1 (50m ago)   7h54m
+▶️ Проверка Istio инъекции в default namespace...
+enabled
+
+
+check-fallback.sh
+
+$ ./check-fallback.sh
+NAME                                     READY   STATUS    RESTARTS   AGE
+booking-service-task5-67d5f7cb47-x9cfv   2/2     Running   0          61m
+deployment.apps/booking-service-task5-v2 scaled
+▶️ Testing fallback route...
+1pong from v1
+VT_PRACTICUM@DESKTOP-5O77H0H MINGW64 /x/CloudDocs/YandexDisk/Work/Yaandex_PRCM/Microservices/Sprint2_Monolith_DevOps/FinalTask/msa-sprint2/tasks/task5 (main)
+
+check-feature-flag.sh
+
+$ ./check-feature-flag.sh
+▶️ Проверка Feature Flag (X-Feature-Enabled: true)...
+1pong from v1
